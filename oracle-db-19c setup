@@ -1,0 +1,57 @@
+Oracle 19 Setup Guide
+1. Install prerequisites
+# dnf install -y oracle-database-preinstall-19c
+# dnf install -y libnsl libnsl2-devel
+
+2. Create oracle user
+# groupadd -g 54321 oinstall
+# groupadd -g 54322 dba
+# useradd -u 54321 -g oinstall -G dba oracle
+
+3. Create directories
+# mkdir -p /u01/app/oracle/product/19c/dbhome_1
+# chown -R oracle:oinstall /u01
+# chmod -R 775 /u01
+
+4. Set kernel parameters (add to /etc/sysctl.conf)
+  cat >> /etc/sysctl.conf << EOF
+  fs.file-max = 6815744
+  kernel.sem = 250 32000 100 128
+  kernel.shmmni = 4096
+  kernel.shmall = 1073741824
+  kernel.shmmax = 4398046511104
+  net.core.rmem_default = 262144
+  net.core.rmem_max = 4194304
+  net.core.wmem_default = 262144
+  net.core.wmem_max = 1048576
+  EOF
+
+# sysctl -p
+
+Verify:
+# sysctl -a | grep -E "shm|sem|file-max"
+
+5. Set limits (add to /etc/security/limits.conf)
+  cat >> /etc/security/limits.conf << EOF
+  oracle soft nofile 1024
+  oracle hard nofile 65536
+  oracle soft nproc 2047
+  oracle hard nproc 16384
+  oracle soft stack 10240
+  oracle hard stack 32768
+  EOF
+
+6. Set oracle user environment (~/.bash_profile)
+  cat >> /home/oracle/.bash_profile << EOF
+  export ORACLE_BASE=/u01/app/oracle
+  export ORACLE_HOME=/u01/app/oracle/product/19c/dbhome_1
+  export ORACLE_SID=ORCL
+  export PATH=\$ORACLE_HOME/bin:\$PATH
+  export LD_LIBRARY_PATH=\$ORACLE_HOME/lib
+  EOF
+
+After this.. unzip Oracle 19c in /u01/app/oracle/product/19c/dbhome_1 and run installation
+Or Downaload using public repo
+# dnf install -y oracle-database-ee-19c
+
+
